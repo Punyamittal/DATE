@@ -1,23 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "chat-app/backend/server.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "chat-app/package.json",
-      "use": "@vercel/next"
-    }
+  "buildCommand": "cd chat-app && npm install && npm run build",
+  "outputDirectory": "chat-app/.next",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "chat-app/backend/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "chat-app/$1"
+  "functions": {
+    "api": {
+      "handler": "chat-app/backend/server.js"
     }
-  ]
+  }
 } 
