@@ -1,0 +1,13 @@
+{
+  "name": "vit-dating-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "cd chat-app && npm run build",
+    "vercel-build": "cd chat-app && npm run build"
+  },
+  "workspaces": [
+    "chat-app",
+    "chat-app/backend"
+  ]
+} 
