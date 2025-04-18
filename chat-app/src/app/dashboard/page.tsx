@@ -1,138 +1,46 @@
-'use client';
+import { auth } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import SwipeMatcher from '../components/dashboard/SwipeMatcher';
-import { useAuth } from '../context/AuthContext';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
-const DashboardPage = () => {
-  const router = useRouter();
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState('discover');
-
-  useEffect(() => {
-    // Redirect if not authenticated
-    if (!authLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [authLoading, isAuthenticated, router]);
-
-  if (authLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null; // Will redirect via useEffect
+export default async function DashboardPage() {
+  const { userId } = auth();
+  const user = await currentUser();
+  
+  if (!userId) {
+    redirect("/sign-in");
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Dashboard</h1>
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8">Welcome, {user?.firstName || "User"}!</h1>
+      
+      <div className="bg-white shadow rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Your Dashboard</h2>
+        <p className="text-gray-600 mb-6">
+          You are now logged in with Clerk authentication. This page is protected and only
+          accessible to authenticated users.
+        </p>
         
-        {/* Tabs navigation */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex space-x-8">
-            <button
-              className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'discover'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('discover')}
-            >
-              Discover
-            </button>
-            <button
-              className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'matches'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('matches')}
-            >
-              Matches
-            </button>
-            <button
-              className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'messages'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('messages')}
-            >
-              Messages
-            </button>
-            <button
-              className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'groups'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('groups')}
-            >
-              Group Chats
-            </button>
-            <button
-              className={`pb-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'random'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-              onClick={() => setActiveTab('random')}
-            >
-              Random Chat
-            </button>
-          </nav>
-        </div>
-        
-        {/* Tab content */}
-        <div>
-          {activeTab === 'discover' && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Find Your Match</h2>
-              <SwipeMatcher />
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="border rounded-lg p-4">
+            <h3 className="font-medium mb-2">Your Profile</h3>
+            <div className="space-y-2 text-sm">
+              <p><span className="font-medium">Name:</span> {user?.firstName} {user?.lastName}</p>
+              <p><span className="font-medium">Email:</span> {user?.emailAddresses[0]?.emailAddress}</p>
             </div>
-          )}
-          
-          {activeTab === 'matches' && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Your Matches</h2>
-              <p className="text-gray-600">Match list will be implemented here</p>
-            </div>
-          )}
-          
-          {activeTab === 'messages' && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Messages</h2>
-              <p className="text-gray-600">Chat with your matches</p>
-            </div>
-          )}
-          
-          {activeTab === 'groups' && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Group Chats</h2>
-              <p className="text-gray-600">Join group discussions with other users</p>
-            </div>
-          )}
-          
-          {activeTab === 'random' && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Random Chat</h2>
-              <p className="text-gray-600">Chat with random users</p>
-            </div>
-          )}
+          </div>
+
+          <div className="border rounded-lg p-4">
+            <h3 className="font-medium mb-2">Quick Links</h3>
+            <ul className="space-y-2 text-sm">
+              <li>- View Matches</li>
+              <li>- Messages</li>
+              <li>- Update Profile</li>
+              <li>- Settings</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default DashboardPage; 
+} 
