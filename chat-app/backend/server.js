@@ -6,11 +6,15 @@ const http = require("http");
 
 // ==================== CONFIGURATION ====================
 const app = express();
+
+// Enhanced CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
@@ -88,6 +92,42 @@ function setupRoutes() {
       console.log('Advanced chat features not available in in-memory mode');
     }
   }
+
+  // Global error handling middleware
+  app.use((err, req, res, next) => {
+    console.error('Global error handler caught:', err);
+    
+    // Handle specific error types
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ 
+        status: 'error',
+        message: 'Validation Error', 
+        details: err.message
+      });
+    }
+    
+    if (err.name === 'UnauthorizedError' || err.status === 401) {
+      return res.status(401).json({ 
+        status: 'error',
+        message: 'Unauthorized Access'
+      });
+    }
+    
+    if (err.name === 'ForbiddenError' || err.status === 403) {
+      return res.status(403).json({ 
+        status: 'error',
+        message: 'Forbidden Access'
+      });
+    }
+    
+    // Default to 500 server error
+    res.status(500).json({
+      status: 'error',
+      message: process.env.NODE_ENV === 'production' 
+        ? 'Internal Server Error' 
+        : err.message || 'Something went wrong'
+    });
+  });
 
   // Status route for health checks
   app.get('/api/status', (req, res) => {
